@@ -14,4 +14,12 @@ public class BoardData : ScriptableObject
 
     public int Width => grid.GetLength(0);
     public int Height => grid.GetLength(1);
+
+    public BoardData Copy()
+    {
+        BoardData copy = Instantiate(this);
+        Marker[,] gridCopy = grid.Clone() as Marker[,];
+        copy.grid = gridCopy;
+        return copy;
+    }
 }

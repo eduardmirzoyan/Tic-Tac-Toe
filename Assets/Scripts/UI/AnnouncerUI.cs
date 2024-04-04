@@ -12,12 +12,14 @@ public class AnnouncerUI : MonoBehaviour
     {
         GameEvents.instance.OnStartTurn += UpdateUI;
         GameEvents.instance.OnGameEnd += UpdateUI;
+        GameEvents.instance.OnGameReset += UpdateUI;
     }
 
     private void OnDestroy()
     {
         GameEvents.instance.OnStartTurn -= UpdateUI;
         GameEvents.instance.OnGameEnd -= UpdateUI;
+        GameEvents.instance.OnGameReset -= UpdateUI;
     }
 
     private void UpdateUI(Marker marker)
@@ -28,5 +30,10 @@ public class AnnouncerUI : MonoBehaviour
     private void UpdateUI(Marker marker, List<Vector2Int> winningPositions)
     {
         announcerLabel.text = winningPositions.Count == 0 ? "Draw!" : $"{marker} Wins!";
+    }
+
+    private void UpdateUI()
+    {
+        announcerLabel.text = "Tic-Tac-Toe";
     }
 }

@@ -17,15 +17,19 @@ public class GameEvents : MonoBehaviour
         instance = this;
     }
 
+    public event Action OnGameStart;
     public event Action<BoardData> OnBoardInitalize;
     public event Action<Marker> OnStartTurn;
     public event Action<BoardData, int, int> OnPlayTurn;
     public event Action<bool> OnAllowPlayerAction;
     public event Action<Marker, List<Vector2Int>> OnGameEnd;
+    public event Action OnGameReset;
 
+    public void TriggerOnGameStart() => OnGameStart?.Invoke();
     public void TriggerOnBoardInitialize(BoardData boardData) => OnBoardInitalize?.Invoke(boardData);
     public void TriggerOnStartTurn(Marker marker) => OnStartTurn?.Invoke(marker);
     public void TriggerOnPlayTurn(BoardData boardData, int row, int col) => OnPlayTurn?.Invoke(boardData, row, col);
     public void TriggerOnAllowPlayerAction(bool allow) => OnAllowPlayerAction?.Invoke(allow);
     public void TriggerOnGameEnd(Marker winner, List<Vector2Int> winningPositions) => OnGameEnd?.Invoke(winner, winningPositions);
+    public void TriggerOnGameReset() => OnGameReset?.Invoke();
 }

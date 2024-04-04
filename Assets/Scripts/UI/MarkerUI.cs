@@ -19,24 +19,32 @@ public class MarkerUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     [SerializeField] private int col;
     [SerializeField] private bool allowInteraction;
 
-    public void Initialize(int row, int col, Marker marker)
+    private void Start()
     {
-        this.row = row;
-        this.col = col;
-        gameObject.name = $"Marker [{row}, {col}] ({marker})";
-        SetSprite(marker);
-        hoverImage.enabled = false;
-
         // Sub
+        GameEvents.instance.OnStartTurn += UpdateUI;
         GameEvents.instance.OnPlayTurn += UpdateUI;
         GameEvents.instance.OnGameEnd += UpdateUI;
+        GameEvents.instance.OnGameReset += UpdateUI;
     }
 
     private void OnDestroy()
     {
         // Unsub
+        GameEvents.instance.OnStartTurn -= UpdateUI;
         GameEvents.instance.OnPlayTurn -= UpdateUI;
         GameEvents.instance.OnGameEnd -= UpdateUI;
+        GameEvents.instance.OnGameReset -= UpdateUI;
+    }
+
+    public void Initialize(int row, int col, Marker marker)
+    {
+        this.row = row;
+        this.col = col;
+        SetSprite(marker);
+        hoverImage.enabled = false;
+
+        gameObject.name = $"Marker [{row}, {col}] ({marker})";
     }
 
     public void OnPointerEnter(PointerEventData eventData)
@@ -76,6 +84,12 @@ public class MarkerUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         spriteImage.raycastTarget = false;
     }
 
+    private void UpdateUI(Marker marker)
+    {
+        // Set hover based on marker
+        hoverImage.sprite = sprites[(int)marker - 1];
+    }
+
     private void UpdateUI(BoardData boardData, int row, int col)
     {
         // Ignore other indices
@@ -96,8 +110,15 @@ public class MarkerUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         else
         {
             // If this is any of the winning positions
-            spriteImage.color = winningPositions.Any(position => position.x == row && position.y == col) ? Color.red : Color.gray;
+            if (spriteImage.color != Color.clear)
+                spriteImage.color = winningPositions.Any(position => position.x == row && position.y == col) ? Color.red : Color.gray;
         }
+    }
 
+    private void UpdateUI()
+    {
+        // Reset
+        SetSprite(Marker.None);
+        hoverImage.enabled = false;
     }
 }

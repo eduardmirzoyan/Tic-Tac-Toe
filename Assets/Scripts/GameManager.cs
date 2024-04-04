@@ -26,18 +26,37 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        StartCoroutine(StartGame());
+        StartCoroutine(Initialize());
     }
 
-    private IEnumerator StartGame()
+    private IEnumerator Initialize()
     {
         // Allow objects to initialize
         yield return new WaitForEndOfFrame();
 
-        Setup();
+        Reset();
+
+        // Open scene
+        TransitionManager.instance.Initialize();
+        TransitionManager.instance.OpenScene();
     }
 
     #region Public Functions
+
+    public void StartGame(Difficulty difficulty)
+    {
+        // Setup board
+        Setup(difficulty);
+
+        // Update UI
+        GameEvents.instance.TriggerOnGameStart();
+    }
+
+    public void Reset()
+    {
+        // Update UI
+        GameEvents.instance.TriggerOnGameReset();
+    }
 
     public void PlayTurn(int row, int col)
     {
@@ -74,17 +93,11 @@ public class GameManager : MonoBehaviour
         else throw new System.Exception("Undefined number of winners? " + result.Count);
     }
 
-    public void Restart()
-    {
-        // Re-setup board
-        Setup();
-    }
-
     #endregion
 
     #region Private Functions
 
-    private void Setup()
+    private void Setup(Difficulty difficulty)
     {
         // Initialize board
         boardData = ScriptableObject.CreateInstance<BoardData>();
@@ -93,7 +106,7 @@ public class GameManager : MonoBehaviour
 
         // Create easy AI
         ai = ScriptableObject.CreateInstance<AI>();
-        ai.Initialize(Difficulty.Easy);
+        ai.Initialize(difficulty);
 
         // X starts
         currentTurn = Marker.X;
@@ -123,12 +136,22 @@ public class GameManager : MonoBehaviour
             currentTurn = Marker.O;
             GameEvents.instance.TriggerOnStartTurn(currentTurn);
 
-            // Prevent player interference
-            GameEvents.instance.TriggerOnAllowPlayerAction(false);
+            // If no ai, then let player go
+            if (ai.difficulty == Difficulty.None)
+            {
+                // Allow player to play
+                GameEvents.instance.TriggerOnAllowPlayerAction(true);
+            }
+            else
+            {
+                // Prevent player interference
+                GameEvents.instance.TriggerOnAllowPlayerAction(false);
 
-            // Allo w AI to play
-            Vector2Int move = ai.DetermineBestMove(boardData, currentTurn);
-            PlayTurn(move.x, move.y);
+                // Allow AI to play
+                Vector2Int move = ai.DetermineBestMove(boardData, currentTurn);
+                PlayTurn(move.x, move.y);
+            }
+
         }
         else if (currentTurn == Marker.O)
         {

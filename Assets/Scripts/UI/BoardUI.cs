@@ -11,12 +11,16 @@ public class BoardUI : MonoBehaviour
     private void Start()
     {
         GameEvents.instance.OnBoardInitalize += UpdateUI;
+        GameEvents.instance.OnGameStart += StartGame;
+        GameEvents.instance.OnGameReset += ResetGame;
         GameEvents.instance.OnAllowPlayerAction += UpdateUI;
     }
 
     private void OnDestroy()
     {
         GameEvents.instance.OnBoardInitalize -= UpdateUI;
+        GameEvents.instance.OnGameStart -= StartGame;
+        GameEvents.instance.OnGameReset -= ResetGame;
         GameEvents.instance.OnAllowPlayerAction -= UpdateUI;
     }
 
@@ -30,6 +34,16 @@ public class BoardUI : MonoBehaviour
                 markerUIs[index].Initialize(i, j, boardData[i, j]);
             }
         }
+    }
+
+    private void ResetGame()
+    {
+        canvasGroup.blocksRaycasts = false;
+    }
+
+    private void StartGame()
+    {
+        canvasGroup.blocksRaycasts = true;
     }
 
     private void UpdateUI(bool allow)
