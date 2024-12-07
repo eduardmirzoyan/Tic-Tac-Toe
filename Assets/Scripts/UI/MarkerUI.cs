@@ -13,28 +13,29 @@ public class MarkerUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 
     [Header("Data")]
     [SerializeField] private Sprite[] sprites;
+    [SerializeField] private float transitionDuration = 0.5f;
+    [SerializeField] private Color hoverColor;
 
     [Header("Debug")]
     [SerializeField] private int row;
     [SerializeField] private int col;
-    [SerializeField] private bool allowInteraction;
 
     private void Start()
     {
         // Sub
-        GameEvents.instance.OnStartTurn += UpdateUI;
-        GameEvents.instance.OnPlayTurn += UpdateUI;
-        GameEvents.instance.OnGameEnd += UpdateUI;
-        GameEvents.instance.OnGameReset += UpdateUI;
+        GameEvents.instance.OnStartTurn += InitMaker;
+        GameEvents.instance.OnPlayTurn += PlayMarker;
+        GameEvents.instance.OnGameEnd += EndMarker;
+        GameEvents.instance.OnGameReset += ClearMarker;
     }
 
     private void OnDestroy()
     {
         // Unsub
-        GameEvents.instance.OnStartTurn -= UpdateUI;
-        GameEvents.instance.OnPlayTurn -= UpdateUI;
-        GameEvents.instance.OnGameEnd -= UpdateUI;
-        GameEvents.instance.OnGameReset -= UpdateUI;
+        GameEvents.instance.OnStartTurn -= InitMaker;
+        GameEvents.instance.OnPlayTurn -= PlayMarker;
+        GameEvents.instance.OnGameEnd -= EndMarker;
+        GameEvents.instance.OnGameReset -= ClearMarker;
     }
 
     public void Initialize(int row, int col, Marker marker)
@@ -42,19 +43,19 @@ public class MarkerUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         this.row = row;
         this.col = col;
         SetSprite(marker);
-        hoverImage.enabled = false;
+        SetHover(false);
 
         gameObject.name = $"Marker [{row}, {col}] ({marker})";
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        hoverImage.enabled = true;
+        SetHover(true);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        hoverImage.enabled = false;
+        SetHover(false);
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -67,30 +68,13 @@ public class MarkerUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         GameManager.instance.PlayTurn(row, col);
     }
 
-    private void SetSprite(Marker marker)
-    {
-        if (marker == Marker.None || marker == Marker.Draw)
-        {
-            spriteImage.color = Color.clear;
-            spriteImage.raycastTarget = true;
-            return;
-        }
-
-        // Set sprite based on enum
-        spriteImage.sprite = sprites[(int)marker - 1];
-        spriteImage.color = Color.white;
-
-        // Prevent interaction
-        spriteImage.raycastTarget = false;
-    }
-
-    private void UpdateUI(Marker marker)
+    private void InitMaker(Marker marker)
     {
         // Set hover based on marker
         hoverImage.sprite = sprites[(int)marker - 1];
     }
 
-    private void UpdateUI(BoardData boardData, int row, int col)
+    private void PlayMarker(BoardData boardData, int row, int col)
     {
         // Ignore other indices
         if (this.row != row || this.col != col)
@@ -101,7 +85,7 @@ public class MarkerUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         SetSprite(marker);
     }
 
-    private void UpdateUI(Marker _, List<Vector2Int> winningPositions)
+    private void EndMarker(Marker _, List<Vector2Int> winningPositions)
     {
         if (winningPositions.Count == 0)
         {
@@ -115,10 +99,42 @@ public class MarkerUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         }
     }
 
-    private void UpdateUI()
+    private void ClearMarker()
     {
         // Reset
         SetSprite(Marker.None);
-        hoverImage.enabled = false;
+        SetHover(false);
     }
+
+    #region Helpers
+
+    private void SetSprite(Marker marker)
+    {
+        if (marker == Marker.None || marker == Marker.Draw)
+        {
+            hoverImage.raycastTarget = true;
+            LeanTween.scale(spriteImage.gameObject, Vector3.zero, transitionDuration).setEase(LeanTweenType.easeInQuad);
+            return;
+        }
+        else
+        {
+            // Set sprite based on enum
+            spriteImage.sprite = sprites[(int)marker - 1];
+            spriteImage.color = Color.white;
+
+            // Prevent interaction
+            hoverImage.raycastTarget = false;
+
+            // Fade in
+            spriteImage.transform.localScale = Vector3.zero;
+            LeanTween.scale(spriteImage.gameObject, Vector3.one, transitionDuration).setEase(LeanTweenType.easeOutQuad);
+        }
+    }
+
+    private void SetHover(bool state)
+    {
+        hoverImage.color = state ? hoverColor : Color.clear;
+    }
+
+    #endregion
 }

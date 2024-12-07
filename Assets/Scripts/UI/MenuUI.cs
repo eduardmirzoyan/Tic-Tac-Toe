@@ -4,14 +4,21 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.IO;
+using System.Text;
 
 public class MenuUI : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Button previousButton;
-    [SerializeField] private Button startButton;
     [SerializeField] private Button nextButton;
     [SerializeField] private TextMeshProUGUI startLabel;
+    [SerializeField] private Outline startOutline;
+
+    [Header("Settings")]
+    [SerializeField] private float transitionDuration = 0.25f;
+    [SerializeField] private Color startColor;
+    [SerializeField] private Color endColor;
 
     [Header("Debug")]
     [SerializeField] private Difficulty difficulty;
@@ -24,32 +31,50 @@ public class MenuUI : MonoBehaviour
         isStarted = false;
 
         GameEvents.instance.OnGameStart += UpdateStart;
+        GameEvents.instance.OnGameEnd += UpdateEnd;
         GameEvents.instance.OnGameReset += UpdateReset;
     }
 
     private void OnDestroy()
     {
         GameEvents.instance.OnGameStart -= UpdateStart;
+        GameEvents.instance.OnGameEnd -= UpdateEnd;
         GameEvents.instance.OnGameReset -= UpdateReset;
     }
 
+    #region Event
+
     private void UpdateStart()
     {
-        previousButton.enabled = false;
-        nextButton.enabled = false;
+        SetNavigationButtons(false);
         startLabel.text = "Reset";
+
+        startOutline.enabled = false;
+        startOutline.effectColor = Color.clear;
 
         isStarted = true;
     }
 
     private void UpdateReset()
     {
-        previousButton.enabled = true;
-        nextButton.enabled = true;
+        SetNavigationButtons(true);
         UpdateLabel(difficulty);
+
+        startOutline.enabled = true;
+        startOutline.effectColor = startColor;
 
         isStarted = false;
     }
+
+    private void UpdateEnd(Marker _, List<Vector2Int> __)
+    {
+        startOutline.enabled = true;
+        startOutline.effectColor = endColor;
+    }
+
+    #endregion
+
+    #region Button
 
     public void Next()
     {
@@ -87,11 +112,31 @@ public class MenuUI : MonoBehaviour
         UpdateLabel(difficulty);
     }
 
+    #endregion
+
+    #region Helpers
+
+    private void SetNavigationButtons(bool show)
+    {
+        if (show)
+        {
+            LeanTween.scale(nextButton.gameObject, Vector3.one, transitionDuration).setEase(LeanTweenType.easeOutQuad);
+            LeanTween.scale(previousButton.gameObject, Vector3.one, transitionDuration).setEase(LeanTweenType.easeOutQuad);
+        }
+        else
+        {
+            LeanTween.scale(nextButton.gameObject, Vector3.zero, transitionDuration).setEase(LeanTweenType.easeInQuad);
+            LeanTween.scale(previousButton.gameObject, Vector3.zero, transitionDuration).setEase(LeanTweenType.easeInQuad);
+        }
+    }
+
     private void UpdateLabel(Difficulty difficulty)
     {
         if (difficulty == Difficulty.None)
-            startLabel.text = $"Start [vs Player]";
+            startLabel.text = $"Start [2 Player]";
         else
-            startLabel.text = $"Start [vs {difficulty} CPU]";
+            startLabel.text = $"Start [{difficulty} CPU]";
     }
+
+    #endregion
 }

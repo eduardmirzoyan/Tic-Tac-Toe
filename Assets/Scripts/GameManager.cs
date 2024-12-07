@@ -34,10 +34,10 @@ public class GameManager : MonoBehaviour
         // Allow objects to initialize
         yield return new WaitForEndOfFrame();
 
+        // Set game to reset state
         Reset();
 
         // Open scene
-        TransitionManager.instance.Initialize();
         TransitionManager.instance.OpenScene();
     }
 

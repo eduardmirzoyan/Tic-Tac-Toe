@@ -25,11 +25,17 @@ public class AnnouncerUI : MonoBehaviour
     private void UpdateUI(Marker marker)
     {
         announcerLabel.text = $"{marker}'s Turn";
+
+        // Play audio
+        AudioManager.instance.PlaySFX("Place Marker");
     }
 
     private void UpdateUI(Marker marker, List<Vector2Int> winningPositions)
     {
         announcerLabel.text = winningPositions.Count == 0 ? "Draw!" : $"{marker} Wins!";
+
+        // Play audio
+        AudioManager.instance.PlaySFX("Game Over");
     }
 
     private void UpdateUI()
